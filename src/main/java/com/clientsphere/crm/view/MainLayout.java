@@ -1,5 +1,7 @@
 package com.clientsphere.crm.view;
 
+import com.clientsphere.crm.model.Customer;
+import com.clientsphere.crm.model.Interaction;
 import com.clientsphere.crm.model.Task;
 import com.clientsphere.crm.repository.CustomerRepository;
 import com.clientsphere.crm.repository.InteractionRepository;
@@ -8,11 +10,18 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MainLayout {
 
@@ -21,6 +30,9 @@ public class MainLayout {
     private final CustomerRepository customerRepository;
     private final InteractionRepository interactionRepository;
     private final TaskRepository taskRepository;
+
+    private final DateTimeFormatter dateFormatter =
+            DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
 
     public MainLayout() {
         root = new BorderPane();
@@ -63,6 +75,7 @@ public class MainLayout {
         Button customersButton = createSidebarButton("Customers");
         Button interactionsButton = createSidebarButton("Interactions");
         Button tasksButton = createSidebarButton("Tasks");
+        Button dealsButton = createSidebarButton("Deals");
         Button analyticsButton = createSidebarButton("Analytics");
         Button settingsButton = createSidebarButton("Settings");
 
@@ -83,6 +96,11 @@ public class MainLayout {
             root.setCenter(taskView.getView());
         });
 
+        dealsButton.setOnAction(event -> {
+            DealView dealView = new DealView();
+            root.setCenter(dealView.getView());
+        });
+
         VBox sidebar = new VBox(10);
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.setPrefWidth(190);
@@ -93,6 +111,7 @@ public class MainLayout {
                 customersButton,
                 interactionsButton,
                 tasksButton,
+                dealsButton,
                 analyticsButton,
                 settingsButton
         );
@@ -119,7 +138,6 @@ public class MainLayout {
 
     private void showDashboard() {
         int totalCustomers = customerRepository.findAll().size();
-
         int totalInteractions = interactionRepository.findAll().size();
 
         List<Task> allTasks = taskRepository.findAll();
@@ -179,17 +197,33 @@ public class MainLayout {
                 )
         );
 
-        VBox content = new VBox(25);
-        content.setPadding(new Insets(30));
-        content.setStyle("-fx-background-color: #F8FAFC;");
+        VBox upcomingTasksSection = createUpcomingTasksSection(allTasks);
+        VBox recentInteractionsSection = createRecentInteractionsSection();
 
-        content.getChildren().addAll(
-                title,
-                subtitle,
-                summaryCards
+        HBox dashboardSections = new HBox(20);
+        dashboardSections.setAlignment(Pos.TOP_LEFT);
+
+        dashboardSections.getChildren().addAll(
+                upcomingTasksSection,
+                recentInteractionsSection
         );
 
-        root.setCenter(content);
+        VBox dashboardContent = new VBox(25);
+        dashboardContent.setPadding(new Insets(30));
+        dashboardContent.setStyle("-fx-background-color: #F8FAFC;");
+
+        dashboardContent.getChildren().addAll(
+                title,
+                subtitle,
+                summaryCards,
+                dashboardSections
+        );
+
+        ScrollPane scrollPane = new ScrollPane(dashboardContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setStyle("-fx-background-color: #F8FAFC;");
+
+        root.setCenter(scrollPane);
     }
 
     private VBox createStatCard(
@@ -228,6 +262,206 @@ public class MainLayout {
         );
 
         return card;
+    }
+
+    private VBox createUpcomingTasksSection(List<Task> allTasks) {
+        Label sectionTitle = new Label("Upcoming Tasks");
+        sectionTitle.setStyle(
+                "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0F172A;"
+        );
+
+        VBox taskList = new VBox(12);
+
+        Map<String, String> customerNames = getCustomerNames();
+
+        List<Task> upcomingTasks = allTasks.stream()
+                .filter(task -> task.getDueDate() != null)
+                .filter(task ->
+                        !task.getDueDate().isBefore(LocalDateTime.now())
+                )
+                .filter(task ->
+                        task.getStatus() == null ||
+                                !task.getStatus().equalsIgnoreCase("Completed")
+                )
+                .sorted(Comparator.comparing(Task::getDueDate))
+                .limit(5)
+                .collect(Collectors.toList());
+
+        if (upcomingTasks.isEmpty()) {
+            Label emptyLabel = new Label("No upcoming tasks.");
+            emptyLabel.setStyle("-fx-text-fill: #64748B;");
+            taskList.getChildren().add(emptyLabel);
+        } else {
+            for (Task task : upcomingTasks) {
+                String customerName = customerNames.getOrDefault(
+                        task.getCustomerId().toHexString(),
+                        "Unknown Customer"
+                );
+
+                Label taskTitle = new Label(task.getTitle());
+                taskTitle.setStyle(
+                        "-fx-font-size: 14px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-text-fill: #0F172A;"
+                );
+
+                Label taskDetails = new Label(
+                        customerName +
+                                " • Due " +
+                                task.getDueDate().format(dateFormatter)
+                );
+                taskDetails.setStyle(
+                        "-fx-font-size: 12px;" +
+                                "-fx-text-fill: #64748B;"
+                );
+
+                VBox taskItem = new VBox(5);
+                taskItem.setPadding(new Insets(12));
+                taskItem.setStyle(
+                        "-fx-background-color: #F8FAFC;" +
+                                "-fx-background-radius: 8px;" +
+                                "-fx-border-color: #E2E8F0;" +
+                                "-fx-border-radius: 8px;"
+                );
+
+                taskItem.getChildren().addAll(
+                        taskTitle,
+                        taskDetails
+                );
+
+                taskList.getChildren().add(taskItem);
+            }
+        }
+
+        VBox section = new VBox(15);
+        section.setPadding(new Insets(20));
+        section.setPrefWidth(420);
+        section.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 10px;" +
+                        "-fx-border-color: #E2E8F0;" +
+                        "-fx-border-radius: 10px;"
+        );
+
+        section.getChildren().addAll(
+                sectionTitle,
+                taskList
+        );
+
+        return section;
+    }
+
+    private VBox createRecentInteractionsSection() {
+        Label sectionTitle = new Label("Recent Interactions");
+        sectionTitle.setStyle(
+                "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-text-fill: #0F172A;"
+        );
+
+        VBox interactionList = new VBox(12);
+
+        Map<String, String> customerNames = getCustomerNames();
+
+        List<Interaction> recentInteractions = interactionRepository
+                .findAll()
+                .stream()
+                .filter(interaction ->
+                        interaction.getInteractionDate() != null
+                )
+                .sorted(
+                        Comparator.comparing(
+                                Interaction::getInteractionDate
+                        ).reversed()
+                )
+                .limit(5)
+                .collect(Collectors.toList());
+
+        if (recentInteractions.isEmpty()) {
+            Label emptyLabel = new Label("No interactions recorded.");
+            emptyLabel.setStyle("-fx-text-fill: #64748B;");
+            interactionList.getChildren().add(emptyLabel);
+        } else {
+            for (Interaction interaction : recentInteractions) {
+                String customerName = customerNames.getOrDefault(
+                        interaction.getCustomerId().toHexString(),
+                        "Unknown Customer"
+                );
+
+                Label subjectLabel = new Label(
+                        interaction.getSubject()
+                );
+                subjectLabel.setStyle(
+                        "-fx-font-size: 14px;" +
+                                "-fx-font-weight: bold;" +
+                                "-fx-text-fill: #0F172A;"
+                );
+
+                Label interactionDetails = new Label(
+                        customerName +
+                                " • " +
+                                interaction.getType() +
+                                " • " +
+                                interaction.getInteractionDate()
+                                        .format(dateFormatter)
+                );
+                interactionDetails.setStyle(
+                        "-fx-font-size: 12px;" +
+                                "-fx-text-fill: #64748B;"
+                );
+
+                VBox interactionItem = new VBox(5);
+                interactionItem.setPadding(new Insets(12));
+                interactionItem.setStyle(
+                        "-fx-background-color: #F8FAFC;" +
+                                "-fx-background-radius: 8px;" +
+                                "-fx-border-color: #E2E8F0;" +
+                                "-fx-border-radius: 8px;"
+                );
+
+                interactionItem.getChildren().addAll(
+                        subjectLabel,
+                        interactionDetails
+                );
+
+                interactionList.getChildren().add(interactionItem);
+            }
+        }
+
+        VBox section = new VBox(15);
+        section.setPadding(new Insets(20));
+        section.setPrefWidth(420);
+        section.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 10px;" +
+                        "-fx-border-color: #E2E8F0;" +
+                        "-fx-border-radius: 10px;"
+        );
+
+        section.getChildren().addAll(
+                sectionTitle,
+                interactionList
+        );
+
+        return section;
+    }
+
+    private Map<String, String> getCustomerNames() {
+        Map<String, String> customerNames = new HashMap<>();
+
+        List<Customer> customers = customerRepository.findAll();
+
+        for (Customer customer : customers) {
+            String fullName = customer.getFirstName()+" "+ customer.getLastName();
+            customerNames.put(
+                    customer.getId().toHexString(),
+                    fullName
+            );
+        }
+
+        return customerNames;
     }
 
     public BorderPane getRoot() {
