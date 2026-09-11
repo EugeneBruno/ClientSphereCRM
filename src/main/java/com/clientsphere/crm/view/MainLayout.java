@@ -6,6 +6,9 @@ import com.clientsphere.crm.model.Task;
 import com.clientsphere.crm.repository.CustomerRepository;
 import com.clientsphere.crm.repository.InteractionRepository;
 import com.clientsphere.crm.repository.TaskRepository;
+import com.clientsphere.crm.model.Deal;
+import com.clientsphere.crm.repository.DealRepository;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
@@ -15,6 +18,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
+import java.util.Locale;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
@@ -28,6 +32,7 @@ public class MainLayout {
     private final BorderPane root;
 
     private final CustomerRepository customerRepository;
+    private final DealRepository dealRepository;
     private final InteractionRepository interactionRepository;
     private final TaskRepository taskRepository;
 
@@ -40,6 +45,7 @@ public class MainLayout {
         customerRepository = new CustomerRepository();
         interactionRepository = new InteractionRepository();
         taskRepository = new TaskRepository();
+        dealRepository = new DealRepository();
 
         createTopBar();
         createSidebar();
@@ -141,6 +147,7 @@ public class MainLayout {
         int totalInteractions = interactionRepository.findAll().size();
 
         List<Task> allTasks = taskRepository.findAll();
+        List<Deal> allDeals = dealRepository.findAll();
 
         long pendingTasks = allTasks.stream()
                 .filter(task ->
@@ -156,6 +163,27 @@ public class MainLayout {
                 )
                 .count();
 
+        long openDeals = allDeals.stream()
+                .filter(deal ->
+                        deal.getStatus() != null &&
+                                deal.getStatus().equalsIgnoreCase("Open")
+                )
+                .count();
+
+        double openDealValue = allDeals.stream()
+                .filter(deal ->
+                        deal.getStatus() != null &&
+                                deal.getStatus().equalsIgnoreCase("Open")
+                )
+                .mapToDouble(Deal::getValue)
+                .sum();
+
+        String formattedOpenDealValue = String.format(
+                Locale.US,
+                "₦%,.2f",
+                openDealValue
+        );
+
         Label title = new Label("Dashboard");
         title.setStyle(
                 "-fx-font-size: 28px;" +
@@ -164,27 +192,38 @@ public class MainLayout {
         );
 
         Label subtitle = new Label(
-                "Overview of your customers, interactions, and tasks"
+                "Overview of your customers, deals, interactions, and tasks"
         );
         subtitle.setStyle(
                 "-fx-font-size: 15px;" +
                         "-fx-text-fill: #64748B;"
         );
 
-        HBox summaryCards = new HBox(15);
-        summaryCards.setAlignment(Pos.CENTER_LEFT);
+        HBox firstSummaryRow = new HBox(15);
+        firstSummaryRow.setAlignment(Pos.CENTER_LEFT);
 
-        summaryCards.getChildren().addAll(
+        firstSummaryRow.getChildren().addAll(
                 createStatCard(
                         "Total Customers",
                         String.valueOf(totalCustomers),
                         "#2563EB"
                 ),
                 createStatCard(
-                        "Total Interactions",
-                        String.valueOf(totalInteractions),
+                        "Open Deals",
+                        String.valueOf(openDeals),
                         "#7C3AED"
                 ),
+                createStatCard(
+                        "Open Deal Value",
+                        formattedOpenDealValue,
+                        "#0891B2"
+                )
+        );
+
+        HBox secondSummaryRow = new HBox(15);
+        secondSummaryRow.setAlignment(Pos.CENTER_LEFT);
+
+        secondSummaryRow.getChildren().addAll(
                 createStatCard(
                         "Pending Tasks",
                         String.valueOf(pendingTasks),
@@ -194,7 +233,18 @@ public class MainLayout {
                         "Completed Tasks",
                         String.valueOf(completedTasks),
                         "#16A34A"
+                ),
+                createStatCard(
+                        "Total Interactions",
+                        String.valueOf(totalInteractions),
+                        "#EA580C"
                 )
+        );
+
+        VBox summaryCards = new VBox(15);
+        summaryCards.getChildren().addAll(
+                firstSummaryRow,
+                secondSummaryRow
         );
 
         VBox upcomingTasksSection = createUpcomingTasksSection(allTasks);
@@ -239,13 +289,17 @@ public class MainLayout {
 
         Label valueLabel = new Label(value);
         valueLabel.setStyle(
-                "-fx-font-size: 30px;" +
+                "-fx-font-size: 24px;" +
                         "-fx-font-weight: bold;" +
                         "-fx-text-fill: " + valueColor + ";"
         );
 
+        valueLabel.setWrapText(true);
+        valueLabel.setMaxWidth(Double.MAX_VALUE);
+
         VBox card = new VBox(10);
-        card.setPrefWidth(190);
+        card.setPrefWidth(230);
+        card.setMinWidth(230);
         card.setPrefHeight(120);
         card.setPadding(new Insets(20));
 
