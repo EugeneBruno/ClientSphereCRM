@@ -107,6 +107,11 @@ public class MainLayout {
             root.setCenter(dealView.getView());
         });
 
+        analyticsButton.setOnAction(event -> {
+            AnalyticsView analyticsView = new AnalyticsView();
+            root.setCenter(analyticsView.getView());
+        });
+
         VBox sidebar = new VBox(10);
         sidebar.setPadding(new Insets(25, 15, 25, 15));
         sidebar.setPrefWidth(190);
