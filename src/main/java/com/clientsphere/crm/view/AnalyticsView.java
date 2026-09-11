@@ -6,9 +6,12 @@ import com.clientsphere.crm.model.Task;
 import com.clientsphere.crm.repository.DealRepository;
 import com.clientsphere.crm.repository.InteractionRepository;
 import com.clientsphere.crm.repository.TaskRepository;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.NumberAxis;
@@ -17,7 +20,8 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
@@ -56,45 +60,58 @@ public class AnalyticsView {
         Label subtitle = new Label(
                 "Analyze deals, tasks, and customer interactions"
         );
+        subtitle.setWrapText(true);
         subtitle.setStyle(
                 "-fx-font-size: 15px;" +
                         "-fx-text-fill: #64748B;"
         );
 
-        HBox summaryCards = new HBox(15);
-        summaryCards.setAlignment(Pos.CENTER_LEFT);
-
-        summaryCards.getChildren().addAll(
-                createSummaryCard(
-                        "Total Deal Value",
-                        formatCurrency(getTotalDealValue(allDeals)),
-                        "#2563EB"
-                ),
-                createSummaryCard(
-                        "Won Deal Value",
-                        formatCurrency(getDealValueByStatus(allDeals, "Won")),
-                        "#16A34A"
-                ),
-                createSummaryCard(
-                        "Lost Deal Value",
-                        formatCurrency(getDealValueByStatus(allDeals, "Lost")),
-                        "#DC2626"
-                ),
-                createSummaryCard(
-                        "Total Deals",
-                        String.valueOf(allDeals.size()),
-                        "#7C3AED"
-                )
+        VBox totalDealCard = createSummaryCard(
+                "Total Deal Value",
+                formatCurrency(getTotalDealValue(allDeals)),
+                "#2563EB"
         );
 
-        PieChart dealsByStatusChart = createDealsByStatusChart(allDeals);
+        VBox wonDealCard = createSummaryCard(
+                "Won Deal Value",
+                formatCurrency(getDealValueByStatus(allDeals, "Won")),
+                "#16A34A"
+        );
+
+        VBox lostDealCard = createSummaryCard(
+                "Lost Deal Value",
+                formatCurrency(getDealValueByStatus(allDeals, "Lost")),
+                "#DC2626"
+        );
+
+        VBox totalDealsCard = createSummaryCard(
+                "Total Deals",
+                String.valueOf(allDeals.size()),
+                "#7C3AED"
+        );
+
+        FlowPane summaryCards = new FlowPane();
+        summaryCards.setHgap(15);
+        summaryCards.setVgap(15);
+        summaryCards.setAlignment(Pos.CENTER_LEFT);
+        summaryCards.setMinWidth(0);
+        summaryCards.setMaxWidth(Double.MAX_VALUE);
+
+        summaryCards.getChildren().addAll(
+                totalDealCard,
+                wonDealCard,
+                lostDealCard,
+                totalDealsCard
+        );
+
+        PieChart dealsByStatusChart =
+                createDealsByStatusChart(allDeals);
+
         BarChart<String, Number> taskStatusChart =
                 createTaskStatusChart(allTasks);
+
         BarChart<String, Number> interactionTypeChart =
                 createInteractionTypeChart(allInteractions);
-
-        HBox chartsRow = new HBox(20);
-        chartsRow.setAlignment(Pos.TOP_LEFT);
 
         VBox dealsChartSection = createChartSection(
                 "Deals by Status",
@@ -106,33 +123,190 @@ public class AnalyticsView {
                 taskStatusChart
         );
 
-        chartsRow.getChildren().addAll(
-                dealsChartSection,
-                tasksChartSection
-        );
-
         VBox interactionsChartSection = createChartSection(
                 "Interactions by Type",
                 interactionTypeChart
         );
 
+        FlowPane chartsContainer = new FlowPane();
+        chartsContainer.setHgap(20);
+        chartsContainer.setVgap(20);
+        chartsContainer.setAlignment(Pos.TOP_LEFT);
+        chartsContainer.setMinWidth(0);
+        chartsContainer.setMaxWidth(Double.MAX_VALUE);
+
+        chartsContainer.getChildren().addAll(
+                dealsChartSection,
+                tasksChartSection,
+                interactionsChartSection
+        );
+
         VBox content = new VBox(25);
         content.setPadding(new Insets(30));
+        content.setFillWidth(true);
+        content.setMinWidth(0);
+        content.setMaxWidth(Double.MAX_VALUE);
         content.setStyle("-fx-background-color: #F8FAFC;");
 
         content.getChildren().addAll(
                 title,
                 subtitle,
                 summaryCards,
-                chartsRow,
-                interactionsChartSection
+                chartsContainer
         );
 
         ScrollPane scrollPane = new ScrollPane(content);
         scrollPane.setFitToWidth(true);
+        scrollPane.setHbarPolicy(
+                ScrollPane.ScrollBarPolicy.NEVER
+        );
+        scrollPane.setVbarPolicy(
+                ScrollPane.ScrollBarPolicy.AS_NEEDED
+        );
+        scrollPane.setPannable(true);
         scrollPane.setStyle("-fx-background-color: #F8FAFC;");
 
+        /*
+         * Keep the content width equal to the available viewport width.
+         * This prevents the content from retaining an old larger width
+         * when the window is manually resized.
+         */
+        content.prefWidthProperty().bind(
+                Bindings.createDoubleBinding(
+                        () -> scrollPane.getViewportBounds().getWidth(),
+                        scrollPane.viewportBoundsProperty()
+                )
+        );
+
+        /*
+         * Responsive summary-card layout.
+         */
+        summaryCards.widthProperty().addListener(
+                (observable, oldWidth, newWidth) -> {
+                    updateSummaryCardWidths(
+                            summaryCards,
+                            totalDealCard,
+                            wonDealCard,
+                            lostDealCard,
+                            totalDealsCard
+                    );
+                }
+        );
+
+        /*
+         * Responsive chart layout.
+         */
+        chartsContainer.widthProperty().addListener(
+                (observable, oldWidth, newWidth) -> {
+                    updateChartSectionWidths(
+                            chartsContainer,
+                            dealsChartSection,
+                            tasksChartSection,
+                            interactionsChartSection
+                    );
+                }
+        );
+
+        /*
+         * Run the first layout update after JavaFX calculates
+         * the actual window and viewport dimensions.
+         */
+        Platform.runLater(() -> {
+            updateSummaryCardWidths(
+                    summaryCards,
+                    totalDealCard,
+                    wonDealCard,
+                    lostDealCard,
+                    totalDealsCard
+            );
+
+            updateChartSectionWidths(
+                    chartsContainer,
+                    dealsChartSection,
+                    tasksChartSection,
+                    interactionsChartSection
+            );
+        });
+
         root.setCenter(scrollPane);
+    }
+
+    private void updateSummaryCardWidths(
+            FlowPane summaryCards,
+            VBox... cards
+    ) {
+        double availableWidth = summaryCards.getWidth();
+
+        if (availableWidth <= 0) {
+            return;
+        }
+
+        double cardWidth;
+
+        /*
+         * Small screens:
+         * One card per row.
+         */
+        if (availableWidth < 520) {
+            cardWidth = Math.max(0, availableWidth - 5);
+        }
+
+        /*
+         * Medium screens:
+         * Two cards per row.
+         */
+        else if (availableWidth < 900) {
+            cardWidth = (availableWidth - 15) / 2;
+        }
+
+        /*
+         * Large screens:
+         * Four cards can fit in one row.
+         */
+        else {
+            cardWidth = (availableWidth - 45) / 4;
+        }
+
+        for (VBox card : cards) {
+            card.setPrefWidth(cardWidth);
+            card.setMinWidth(0);
+            card.setMaxWidth(cardWidth);
+        }
+    }
+
+    private void updateChartSectionWidths(
+            FlowPane chartsContainer,
+            VBox... sections
+    ) {
+        double availableWidth = chartsContainer.getWidth();
+
+        if (availableWidth <= 0) {
+            return;
+        }
+
+        double sectionWidth;
+
+        /*
+         * Large screens:
+         * Two chart sections per row.
+         */
+        if (availableWidth >= 900) {
+            sectionWidth = (availableWidth - 20) / 2;
+        }
+
+        /*
+         * Medium and small screens:
+         * One chart section per row.
+         */
+        else {
+            sectionWidth = availableWidth;
+        }
+
+        for (VBox section : sections) {
+            section.setPrefWidth(sectionWidth);
+            section.setMinWidth(0);
+            section.setMaxWidth(sectionWidth);
+        }
     }
 
     private VBox createSummaryCard(
@@ -141,23 +315,24 @@ public class AnalyticsView {
             String valueColor
     ) {
         Label titleLabel = new Label(title);
+        titleLabel.setWrapText(true);
         titleLabel.setStyle(
                 "-fx-font-size: 14px;" +
                         "-fx-text-fill: #64748B;"
         );
 
         Label valueLabel = new Label(value);
+        valueLabel.setWrapText(true);
         valueLabel.setStyle(
                 "-fx-font-size: 22px;" +
                         "-fx-font-weight: bold;" +
                         "-fx-text-fill: " + valueColor + ";"
         );
 
-        valueLabel.setWrapText(true);
-
         VBox card = new VBox(10);
         card.setPrefWidth(230);
-        card.setMinWidth(230);
+        card.setMinWidth(0);
+        card.setMaxWidth(Double.MAX_VALUE);
         card.setPrefHeight(120);
         card.setPadding(new Insets(20));
 
@@ -178,9 +353,10 @@ public class AnalyticsView {
 
     private VBox createChartSection(
             String title,
-            javafx.scene.Node chart
+            Node chart
     ) {
         Label sectionTitle = new Label(title);
+        sectionTitle.setWrapText(true);
         sectionTitle.setStyle(
                 "-fx-font-size: 18px;" +
                         "-fx-font-weight: bold;" +
@@ -190,12 +366,24 @@ public class AnalyticsView {
         VBox section = new VBox(15);
         section.setPadding(new Insets(20));
         section.setPrefWidth(500);
+        section.setMinWidth(0);
+        section.setMaxWidth(Double.MAX_VALUE);
+
         section.setStyle(
                 "-fx-background-color: white;" +
                         "-fx-background-radius: 10px;" +
                         "-fx-border-color: #E2E8F0;" +
                         "-fx-border-radius: 10px;"
         );
+
+        if (chart instanceof Region region) {
+            region.setMinWidth(0);
+            region.setMaxWidth(Double.MAX_VALUE);
+
+            region.prefWidthProperty().bind(
+                    section.widthProperty().subtract(40)
+            );
+        }
 
         section.getChildren().addAll(
                 sectionTitle,
@@ -220,8 +408,10 @@ public class AnalyticsView {
 
         chart.setTitle("Deal Status");
         chart.setLegendVisible(true);
-        chart.setLabelsVisible(true);
-        chart.setPrefSize(430, 300);
+        chart.setLabelsVisible(false);
+        chart.setMinWidth(0);
+        chart.setPrefHeight(300);
+        chart.setMaxHeight(350);
 
         return chart;
     }
@@ -240,7 +430,9 @@ public class AnalyticsView {
 
         chart.setTitle("Tasks");
         chart.setLegendVisible(false);
-        chart.setPrefSize(430, 300);
+        chart.setMinWidth(0);
+        chart.setPrefHeight(300);
+        chart.setMaxHeight(350);
 
         long pendingTasks = tasks.stream()
                 .filter(task ->
@@ -286,7 +478,9 @@ public class AnalyticsView {
 
         chart.setTitle("Interactions");
         chart.setLegendVisible(false);
-        chart.setPrefSize(900, 300);
+        chart.setMinWidth(0);
+        chart.setPrefHeight(300);
+        chart.setMaxHeight(350);
 
         long calls = countInteractionsByType(interactions, "Call");
         long meetings = countInteractionsByType(interactions, "Meeting");

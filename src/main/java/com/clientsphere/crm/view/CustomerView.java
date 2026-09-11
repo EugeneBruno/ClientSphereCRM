@@ -7,8 +7,8 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -21,13 +21,13 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 import java.util.List;
 import java.util.Optional;
-
 
 public class CustomerView {
 
@@ -52,7 +52,6 @@ public class CustomerView {
 
     private void createCustomerPage() {
 
-
         // =========================
         // PAGE TITLE
         // =========================
@@ -62,6 +61,7 @@ public class CustomerView {
         title.setStyle("""
                 -fx-font-size: 32px;
                 -fx-font-weight: bold;
+                -fx-text-fill: #0F172A;
                 """);
 
 
@@ -69,9 +69,11 @@ public class CustomerView {
                 "Manage and organize your customers"
         );
 
+        subtitle.setWrapText(true);
+
         subtitle.setStyle("""
                 -fx-font-size: 16px;
-                -fx-text-fill: #64748b;
+                -fx-text-fill: #64748B;
                 """);
 
 
@@ -90,14 +92,14 @@ public class CustomerView {
         Button addCustomerButton =
                 new Button("+ Add Customer");
 
-
         addCustomerButton.setStyle("""
-                -fx-background-color: #2563eb;
+                -fx-background-color: #2563EB;
                 -fx-text-fill: white;
                 -fx-font-size: 14px;
                 -fx-font-weight: bold;
                 -fx-padding: 10 18 10 18;
                 -fx-cursor: hand;
+                -fx-background-radius: 5px;
                 """);
 
 
@@ -119,22 +121,19 @@ public class CustomerView {
 
 
         // =========================
-        // HEADER SECTION
+        // RESPONSIVE HEADER
         // =========================
 
-        HBox header = new HBox();
+        FlowPane header = new FlowPane();
 
-        HBox spacer = new HBox();
-
-        HBox.setHgrow(
-                spacer,
-                Priority.ALWAYS
-        );
-
+        header.setHgap(20);
+        header.setVgap(15);
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setPrefWrapLength(700);
+        header.setMaxWidth(Double.MAX_VALUE);
 
         header.getChildren().addAll(
                 titleSection,
-                spacer,
                 addCustomerButton
         );
 
@@ -146,14 +145,13 @@ public class CustomerView {
         TextField searchField =
                 new TextField();
 
-
         searchField.setPromptText(
                 "Search customers..."
         );
 
+        searchField.setMaxWidth(Double.MAX_VALUE);
 
-        searchField.setPrefWidth(350);
-
+        searchField.setPrefHeight(38);
 
         searchField.textProperty().addListener(
                 (observable, oldValue, newValue) -> {
@@ -170,85 +168,130 @@ public class CustomerView {
 
         customerTable = new TableView<>();
 
+        customerTable.setPlaceholder(
+                new Label("No customers found.")
+        );
 
+        customerTable.setColumnResizePolicy(
+                TableView.UNCONSTRAINED_RESIZE_POLICY
+        );
+
+        customerTable.setFixedCellSize(55);
+
+        customerTable.setMinHeight(250);
+
+        customerTable.setStyle("""
+                -fx-background-color: white;
+                -fx-border-color: #CBD5E1;
+                -fx-border-radius: 5px;
+                """);
+
+
+        // =========================
         // FIRST NAME COLUMN
+        // =========================
 
         TableColumn<Customer, String> firstNameColumn =
                 new TableColumn<>("First Name");
-
 
         firstNameColumn.setCellValueFactory(
                 new PropertyValueFactory<>("firstName")
         );
 
+        firstNameColumn.setMinWidth(150);
+        firstNameColumn.setPrefWidth(170);
 
+
+        // =========================
         // LAST NAME COLUMN
+        // =========================
 
         TableColumn<Customer, String> lastNameColumn =
                 new TableColumn<>("Last Name");
-
 
         lastNameColumn.setCellValueFactory(
                 new PropertyValueFactory<>("lastName")
         );
 
+        lastNameColumn.setMinWidth(150);
+        lastNameColumn.setPrefWidth(170);
 
+
+        // =========================
         // EMAIL COLUMN
+        // =========================
 
         TableColumn<Customer, String> emailColumn =
                 new TableColumn<>("Email");
-
 
         emailColumn.setCellValueFactory(
                 new PropertyValueFactory<>("email")
         );
 
+        emailColumn.setMinWidth(230);
+        emailColumn.setPrefWidth(250);
 
+
+        // =========================
         // PHONE COLUMN
+        // =========================
 
         TableColumn<Customer, String> phoneColumn =
                 new TableColumn<>("Phone");
-
 
         phoneColumn.setCellValueFactory(
                 new PropertyValueFactory<>("phone")
         );
 
+        phoneColumn.setMinWidth(150);
+        phoneColumn.setPrefWidth(170);
 
+
+        // =========================
         // COMPANY COLUMN
+        // =========================
 
         TableColumn<Customer, String> companyColumn =
                 new TableColumn<>("Company");
-
 
         companyColumn.setCellValueFactory(
                 new PropertyValueFactory<>("company")
         );
 
+        companyColumn.setMinWidth(180);
+        companyColumn.setPrefWidth(200);
 
+
+        // =========================
         // STATUS COLUMN
+        // =========================
 
         TableColumn<Customer, String> statusColumn =
                 new TableColumn<>("Status");
-
 
         statusColumn.setCellValueFactory(
                 new PropertyValueFactory<>("status")
         );
 
+        statusColumn.setMinWidth(180);
+        statusColumn.setPrefWidth(200);
+
+
         // =========================
-// ACTIONS COLUMN
-// =========================
+        // ACTIONS COLUMN
+        // =========================
 
         TableColumn<Customer, Customer> actionsColumn =
                 new TableColumn<>("Actions");
 
-
         actionsColumn.setCellValueFactory(cellData ->
-                new ReadOnlyObjectWrapper<>(
+                new javafx.beans.property.ReadOnlyObjectWrapper<>(
                         cellData.getValue()
                 )
         );
+
+        actionsColumn.setMinWidth(250);
+        actionsColumn.setPrefWidth(270);
 
 
         actionsColumn.setCellFactory(column -> {
@@ -261,32 +304,51 @@ public class CustomerView {
                 private final Button deleteButton =
                         new Button("Delete");
 
-                private final Button historyButton = new Button("History");
+                private final Button historyButton =
+                        new Button("History");
 
                 private final HBox actionButtons =
                         new HBox(8);
 
 
                 {
-                    editButton.setStyle(
-                            "-fx-background-color: #2563EB;" +
-                                    "-fx-text-fill: white;" +
-                                    "-fx-font-size: 12px;" +
-                                    "-fx-cursor: hand;"
-                    );
+                    // EDIT BUTTON
 
-                    deleteButton.setStyle(
-                            "-fx-background-color: #DC2626;" +
-                                    "-fx-text-fill: white;" +
-                                    "-fx-font-size: 12px;" +
-                                    "-fx-cursor: hand;"
-                    );
+                    editButton.setStyle("""
+                            -fx-background-color: #2563EB;
+                            -fx-text-fill: white;
+                            -fx-font-size: 12px;
+                            -fx-padding: 6 10 6 10;
+                            -fx-cursor: hand;
+                            -fx-background-radius: 4px;
+                            """);
 
-                    historyButton.setStyle(
-                            "-fx-background-color: #7C3AED;" +
-                                    "-fx-text-fill: white;" +
-                                    "-fx-cursor: hand;"
-                    );
+
+                    // DELETE BUTTON
+
+                    deleteButton.setStyle("""
+                            -fx-background-color: #DC2626;
+                            -fx-text-fill: white;
+                            -fx-font-size: 12px;
+                            -fx-padding: 6 10 6 10;
+                            -fx-cursor: hand;
+                            -fx-background-radius: 4px;
+                            """);
+
+
+                    // HISTORY BUTTON
+
+                    historyButton.setStyle("""
+                            -fx-background-color: #7C3AED;
+                            -fx-text-fill: white;
+                            -fx-font-size: 12px;
+                            -fx-padding: 6 10 6 10;
+                            -fx-cursor: hand;
+                            -fx-background-radius: 4px;
+                            """);
+
+
+                    actionButtons.setAlignment(Pos.CENTER_LEFT);
 
                     actionButtons.getChildren().addAll(
                             editButton,
@@ -295,10 +357,11 @@ public class CustomerView {
                     );
 
 
+                    // EDIT ACTION
+
                     editButton.setOnAction(event -> {
 
                         Customer customer = getItem();
-
 
                         if (customer != null) {
 
@@ -308,10 +371,11 @@ public class CustomerView {
                     });
 
 
+                    // DELETE ACTION
+
                     deleteButton.setOnAction(event -> {
 
                         Customer customer = getItem();
-
 
                         if (customer != null) {
 
@@ -319,22 +383,24 @@ public class CustomerView {
 
                         }
                     });
+
+
+                    // HISTORY ACTION
+
                     historyButton.setOnAction(event -> {
 
-                    Customer customer =
-                            getTableView()
-                                    .getItems()
-                                    .get(getIndex());
+                        Customer customer = getItem();
 
+                        if (customer != null) {
 
-                    CustomerInteractionHistory historyView =
-                            new CustomerInteractionHistory(customer);
+                            CustomerInteractionHistory historyView =
+                                    new CustomerInteractionHistory(customer);
 
+                            historyView.show();
 
-                    historyView.show();
-                });
+                        }
+                    });
                 }
-
 
 
                 @Override
@@ -362,58 +428,67 @@ public class CustomerView {
         });
 
 
-        actionsColumn.setPrefWidth(170);
-
-        actionsColumn.setMinWidth(170);
-
-
-        actionsColumn.setPrefWidth(170);
-        actionsColumn.setMinWidth(170);
-
+        // =========================
         // ADD COLUMNS TO TABLE
+        // =========================
+
         customerTable.getColumns().addAll(
 
                 firstNameColumn,
-
                 lastNameColumn,
-
                 emailColumn,
-
                 phoneColumn,
-
                 companyColumn,
-
                 statusColumn,
-
                 actionsColumn
         );
 
 
-        // Make table use available width
-        customerTable.setColumnResizePolicy(
-                TableView.CONSTRAINED_RESIZE_POLICY
-        );
-
+        // =========================
         // LOAD CUSTOMERS
+        // =========================
+
         loadCustomers();
 
+
+        // =========================
         // MAIN CONTENT
+        // =========================
+
         VBox content = new VBox(25);
 
         content.setPadding(
-                new Insets(40)
+                new Insets(30)
         );
+
+        content.setFillWidth(true);
+
+        content.setMinWidth(0);
+
+        content.setMaxWidth(Double.MAX_VALUE);
+
+        content.setStyle("""
+                -fx-background-color: #F8FAFC;
+                """);
+
 
         VBox.setVgrow(
                 customerTable,
                 Priority.ALWAYS
         );
 
+
         content.getChildren().addAll(
                 header,
                 searchField,
                 customerTable
         );
+
+
+        // =========================
+        // ROOT LAYOUT
+        // =========================
+
         root.setCenter(content);
     }
 
@@ -460,7 +535,7 @@ public class CustomerView {
 
 
         String searchKeyword =
-                keyword.toLowerCase();
+                keyword.trim().toLowerCase();
 
 
         ObservableList<Customer> filteredCustomers =
@@ -469,51 +544,39 @@ public class CustomerView {
 
         for (Customer customer : allCustomers) {
 
-
             boolean matches =
 
-
-                    customer.getFirstName()
+                    safeString(customer.getFirstName())
                             .toLowerCase()
                             .contains(searchKeyword)
 
-
                             ||
 
-
-                            customer.getLastName()
+                            safeString(customer.getLastName())
                                     .toLowerCase()
                                     .contains(searchKeyword)
 
-
                             ||
 
-
-                            customer.getEmail()
+                            safeString(customer.getEmail())
                                     .toLowerCase()
                                     .contains(searchKeyword)
 
-
                             ||
 
-
-                            customer.getPhone()
+                            safeString(customer.getPhone())
                                     .toLowerCase()
                                     .contains(searchKeyword)
 
-
                             ||
 
-
-                            customer.getCompany()
+                            safeString(customer.getCompany())
                                     .toLowerCase()
                                     .contains(searchKeyword)
 
-
                             ||
 
-
-                            customer.getStatus()
+                            safeString(customer.getStatus())
                                     .toLowerCase()
                                     .contains(searchKeyword);
 
@@ -523,7 +586,6 @@ public class CustomerView {
                 filteredCustomers.add(
                         customer
                 );
-
             }
         }
 
@@ -531,6 +593,16 @@ public class CustomerView {
         customerTable.setItems(
                 filteredCustomers
         );
+    }
+
+
+    // =========================
+    // NULL-SAFE STRING HELPER
+    // =========================
+
+    private String safeString(String value) {
+
+        return value == null ? "" : value;
     }
 
 
@@ -561,7 +633,6 @@ public class CustomerView {
 
     private void deleteCustomer(Customer customer) {
 
-
         Alert confirmation =
                 new Alert(
                         Alert.AlertType.CONFIRMATION
@@ -575,9 +646,9 @@ public class CustomerView {
 
         confirmation.setHeaderText(
                 "Delete "
-                        + customer.getFirstName()
+                        + safeString(customer.getFirstName())
                         + " "
-                        + customer.getLastName()
+                        + safeString(customer.getLastName())
                         + "?"
         );
 
@@ -597,7 +668,6 @@ public class CustomerView {
                         &&
                         result.get() == ButtonType.OK
         ) {
-
 
             customerRepository.delete(
                     customer.getId()
