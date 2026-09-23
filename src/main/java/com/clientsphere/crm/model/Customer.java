@@ -17,14 +17,12 @@ public class Customer {
 
     private LocalDateTime createdAt;
 
+    // HR/User responsible for this customer
+    private ObjectId assignedTo;
 
-    // Empty Constructor
     public Customer() {
-
     }
 
-
-    // Constructor
     public Customer(
             String firstName,
             String lastName,
@@ -33,6 +31,7 @@ public class Customer {
             String company,
             String status
     ) {
+        this.id = new ObjectId();
 
         this.firstName = firstName;
         this.lastName = lastName;
@@ -42,10 +41,14 @@ public class Customer {
         this.status = status;
 
         this.createdAt = LocalDateTime.now();
+
+        // No HR assigned until the customer is created/assigned.
+        this.assignedTo = null;
     }
 
-
-    // Getters and Setters
+    // ============================================================
+    // ID
+    // ============================================================
 
     public ObjectId getId() {
         return id;
@@ -55,6 +58,9 @@ public class Customer {
         this.id = id;
     }
 
+    // ============================================================
+    // FIRST NAME
+    // ============================================================
 
     public String getFirstName() {
         return firstName;
@@ -64,6 +70,9 @@ public class Customer {
         this.firstName = firstName;
     }
 
+    // ============================================================
+    // LAST NAME
+    // ============================================================
 
     public String getLastName() {
         return lastName;
@@ -73,6 +82,9 @@ public class Customer {
         this.lastName = lastName;
     }
 
+    // ============================================================
+    // EMAIL
+    // ============================================================
 
     public String getEmail() {
         return email;
@@ -82,6 +94,9 @@ public class Customer {
         this.email = email;
     }
 
+    // ============================================================
+    // PHONE
+    // ============================================================
 
     public String getPhone() {
         return phone;
@@ -91,6 +106,9 @@ public class Customer {
         this.phone = phone;
     }
 
+    // ============================================================
+    // COMPANY
+    // ============================================================
 
     public String getCompany() {
         return company;
@@ -100,6 +118,9 @@ public class Customer {
         this.company = company;
     }
 
+    // ============================================================
+    // STATUS
+    // ============================================================
 
     public String getStatus() {
         return status;
@@ -109,6 +130,9 @@ public class Customer {
         this.status = status;
     }
 
+    // ============================================================
+    // CREATED AT
+    // ============================================================
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -118,25 +142,23 @@ public class Customer {
         this.createdAt = createdAt;
     }
 
+    // ============================================================
+    // ASSIGNED USER / HR
+    // ============================================================
 
-//    @Override
-//    public String toString() {
-//
-//        return "Customer{" +
-//                "id=" + id +
-//                ", firstName='" + firstName + '\'' +
-//                ", lastName='" + lastName + '\'' +
-//                ", email='" + email + '\'' +
-//                ", phone='" + phone + '\'' +
-//                ", company='" + company + '\'' +
-//                ", status='" + status + '\'' +
-//                ", createdAt=" + createdAt +
-//                '}';
-//    }
+    public ObjectId getAssignedTo() {
+        return assignedTo;
+    }
 
-    @Override
-    public String toString() {
+    public void setAssignedTo(ObjectId assignedTo) {
+        this.assignedTo = assignedTo;
+    }
 
+    // ============================================================
+    // FULL NAME
+    // ============================================================
+
+    public String getFullName() {
         return firstName + " " + lastName;
     }
 }

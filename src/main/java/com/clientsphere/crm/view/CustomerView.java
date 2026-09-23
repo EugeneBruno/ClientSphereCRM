@@ -15,6 +15,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 
@@ -176,14 +177,26 @@ public class CustomerView {
                 TableView.UNCONSTRAINED_RESIZE_POLICY
         );
 
-        customerTable.setFixedCellSize(55);
+        customerTable.setFixedCellSize(38);
 
         customerTable.setMinHeight(250);
+
+        customerTable.setRowFactory(tableView -> {
+
+            TableRow<Customer> row = new TableRow<>();
+
+            row.setMinHeight(30);
+            row.setPrefHeight(38);
+            row.setMaxHeight(38);
+
+            return row;
+        });
 
         customerTable.setStyle("""
                 -fx-background-color: white;
                 -fx-border-color: #CBD5E1;
                 -fx-border-radius: 5px;
+                -fx-fixed-cell-size: 30px;
                 """);
 
 
@@ -318,7 +331,7 @@ public class CustomerView {
                             -fx-background-color: #2563EB;
                             -fx-text-fill: white;
                             -fx-font-size: 12px;
-                            -fx-padding: 6 10 6 10;
+                            -fx-padding: 5 9 5 9;
                             -fx-cursor: hand;
                             -fx-background-radius: 4px;
                             """);
@@ -330,7 +343,7 @@ public class CustomerView {
                             -fx-background-color: #DC2626;
                             -fx-text-fill: white;
                             -fx-font-size: 12px;
-                            -fx-padding: 6 10 6 10;
+                            -fx-padding: 5 9 5 9;
                             -fx-cursor: hand;
                             -fx-background-radius: 4px;
                             """);
@@ -342,7 +355,7 @@ public class CustomerView {
                             -fx-background-color: #7C3AED;
                             -fx-text-fill: white;
                             -fx-font-size: 12px;
-                            -fx-padding: 6 10 6 10;
+                            -fx-padding: 5 9 5 9;
                             -fx-cursor: hand;
                             -fx-background-radius: 4px;
                             """);

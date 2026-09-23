@@ -4,11 +4,13 @@ import com.clientsphere.crm.model.Customer;
 import com.clientsphere.crm.model.Interaction;
 import com.clientsphere.crm.repository.InteractionRepository;
 
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -39,6 +41,10 @@ public class CustomerInteractionHistory {
             );
 
 
+    // =========================================================
+    // CONSTRUCTOR
+    // =========================================================
+
     public CustomerInteractionHistory(
             Customer customer
     ) {
@@ -57,19 +63,25 @@ public class CustomerInteractionHistory {
     }
 
 
+    // =========================================================
+    // CREATE VIEW
+    // =========================================================
+
     private void createView() {
 
-        // =========================
+        // =====================================================
         // TITLE
-        // =========================
+        // =====================================================
 
-        Label title = new Label(
-                customer.getFirstName()
-                        + " "
-                        + customer.getLastName()
-                        + "'s Interaction History"
-        );
+        Label title =
+                new Label(
+                        customer.getFirstName()
+                                + " "
+                                + customer.getLastName()
+                                + "'s Interaction History"
+                );
 
+        title.setWrapText(true);
 
         title.setStyle(
                 "-fx-font-size: 24px;" +
@@ -78,19 +90,21 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // CUSTOMER DETAILS
-        // =========================
+        // =====================================================
 
-        Label customerDetails = new Label(
-                "Customer: "
-                        + customer.getFirstName()
-                        + " "
-                        + customer.getLastName()
-                        + " | "
-                        + customer.getEmail()
-        );
+        Label customerDetails =
+                new Label(
+                        "Customer: "
+                                + customer.getFirstName()
+                                + " "
+                                + customer.getLastName()
+                                + " | "
+                                + customer.getEmail()
+                );
 
+        customerDetails.setWrapText(true);
 
         customerDetails.setStyle(
                 "-fx-font-size: 14px;" +
@@ -98,12 +112,14 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // INTERACTION COUNT
-        // =========================
+        // =====================================================
 
         Label interactionCountLabel =
                 new Label();
+
+        interactionCountLabel.setWrapText(true);
 
         interactionCountLabel.setStyle(
                 "-fx-font-size: 14px;" +
@@ -112,14 +128,16 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // NO INTERACTIONS MESSAGE
-        // =========================
+        // =====================================================
 
         Label noInteractionsLabel =
                 new Label(
                         "No interactions found for this customer."
                 );
+
+        noInteractionsLabel.setWrapText(true);
 
         noInteractionsLabel.setStyle(
                 "-fx-font-size: 16px;" +
@@ -131,32 +149,18 @@ public class CustomerInteractionHistory {
         noInteractionsLabel.setManaged(false);
 
 
-        // =========================
-        // INTERACTION TABLE
-        // =========================
+        // =====================================================
+        // TABLE
+        // =====================================================
 
         interactionTable =
                 createInteractionTable();
 
+        interactionTable.setMinWidth(0);
 
-        // =========================
-        // MAIN LAYOUT
-        // =========================
-
-        VBox root = new VBox(
-                15,
-                title,
-                customerDetails,
-                interactionCountLabel,
-                noInteractionsLabel,
-                interactionTable
+        interactionTable.setMaxWidth(
+                Double.MAX_VALUE
         );
-
-
-        root.setPadding(
-                new Insets(30)
-        );
-
 
         VBox.setVgrow(
                 interactionTable,
@@ -164,28 +168,100 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
-        // SCENE
-        // =========================
+        // =====================================================
+        // MAIN LAYOUT
+        // =====================================================
 
-        Scene scene = new Scene(
-                root,
-                900,
-                550
+        VBox root =
+                new VBox(
+                        15,
+                        title,
+                        customerDetails,
+                        interactionCountLabel,
+                        noInteractionsLabel,
+                        interactionTable
+                );
+
+        root.setFillWidth(true);
+
+        root.setMinWidth(0);
+
+        root.setMaxWidth(
+                Double.MAX_VALUE
         );
+
+        root.setPadding(
+                new Insets(30)
+        );
+
+
+        // =====================================================
+        // SCENE
+        // =====================================================
+
+        Scene scene =
+                new Scene(
+                        root,
+                        900,
+                        550
+                );
 
 
         stage.setTitle(
                 "Customer Interaction History"
         );
 
+        stage.setScene(
+                scene
+        );
 
-        stage.setScene(scene);
+        stage.setMinWidth(500);
+
+        stage.setMinHeight(400);
+
+        stage.setResizable(true);
 
 
-        // =========================
+        // =====================================================
+        // RESPONSIVE ROOT PADDING
+        // =====================================================
+
+        scene.widthProperty().addListener(
+                (observable, oldWidth, newWidth) -> {
+
+                    double width =
+                            newWidth.doubleValue();
+
+                    if (width <= 0) {
+                        return;
+                    }
+
+
+                    if (width < 650) {
+
+                        root.setPadding(
+                                new Insets(15)
+                        );
+
+                    } else if (width < 900) {
+
+                        root.setPadding(
+                                new Insets(20)
+                        );
+
+                    } else {
+
+                        root.setPadding(
+                                new Insets(30)
+                        );
+                    }
+                }
+        );
+
+
+        // =====================================================
         // LOAD INTERACTIONS
-        // =========================
+        // =====================================================
 
         loadInteractions(
                 interactionCountLabel,
@@ -194,6 +270,10 @@ public class CustomerInteractionHistory {
     }
 
 
+    // =========================================================
+    // CREATE INTERACTION TABLE
+    // =========================================================
+
     private TableView<Interaction>
     createInteractionTable() {
 
@@ -201,14 +281,20 @@ public class CustomerInteractionHistory {
                 new TableView<>();
 
 
-        // =========================
+        table.setMinWidth(0);
+
+        table.setMaxWidth(
+                Double.MAX_VALUE
+        );
+
+
+        // =====================================================
         // TYPE
-        // =========================
+        // =====================================================
 
         TableColumn<Interaction, String>
                 typeColumn =
                 new TableColumn<>("Type");
-
 
         typeColumn.setCellValueFactory(
                 new PropertyValueFactory<>(
@@ -217,14 +303,13 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // SUBJECT
-        // =========================
+        // =====================================================
 
         TableColumn<Interaction, String>
                 subjectColumn =
                 new TableColumn<>("Subject");
-
 
         subjectColumn.setCellValueFactory(
                 new PropertyValueFactory<>(
@@ -233,14 +318,13 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // DESCRIPTION
-        // =========================
+        // =====================================================
 
         TableColumn<Interaction, String>
                 descriptionColumn =
                 new TableColumn<>("Description");
-
 
         descriptionColumn.setCellValueFactory(
                 new PropertyValueFactory<>(
@@ -249,47 +333,62 @@ public class CustomerInteractionHistory {
         );
 
 
-        // =========================
+        // =====================================================
         // DATE
-        // =========================
+        // =====================================================
 
         TableColumn<Interaction, String>
                 dateColumn =
                 new TableColumn<>("Date");
 
+        dateColumn.setCellValueFactory(
+                cellData -> {
 
-        dateColumn.setCellValueFactory(cellData -> {
+                    LocalDateTime date =
+                            cellData.getValue()
+                                    .getInteractionDate();
 
-            LocalDateTime date =
-                    cellData.getValue()
-                            .getInteractionDate();
+                    String formattedDate =
+                            date != null
+                                    ? date.format(
+                                    dateFormatter
+                            )
+                                    : "";
 
-
-            String formattedDate =
-                    date != null
-                            ? date.format(dateFormatter)
-                            : "";
-
-
-            return new javafx.beans.property
-                    .SimpleStringProperty(
-                    formattedDate
-            );
-        });
+                    return new SimpleStringProperty(
+                            formattedDate
+                    );
+                }
+        );
 
 
-        // =========================
+        // =====================================================
         // COLUMN WIDTHS
-        // =========================
+        // =====================================================
+
+        typeColumn.setMinWidth(100);
 
         typeColumn.setPrefWidth(120);
 
-        subjectColumn.setPrefWidth(200);
+
+        subjectColumn.setMinWidth(160);
+
+        subjectColumn.setPrefWidth(220);
+
+
+        descriptionColumn.setMinWidth(250);
 
         descriptionColumn.setPrefWidth(350);
 
-        dateColumn.setPrefWidth(180);
 
+        dateColumn.setMinWidth(160);
+
+        dateColumn.setPrefWidth(190);
+
+
+        // =====================================================
+        // ADD COLUMNS
+        // =====================================================
 
         table.getColumns().addAll(
                 typeColumn,
@@ -299,13 +398,68 @@ public class CustomerInteractionHistory {
         );
 
 
+        // =====================================================
+        // TABLE DATA
+        // =====================================================
+
         table.setItems(
                 interactions
         );
 
 
+        // =====================================================
+        // INITIAL RESIZE POLICY
+        // =====================================================
+
         table.setColumnResizePolicy(
                 TableView.CONSTRAINED_RESIZE_POLICY
+        );
+
+
+        // =====================================================
+        // RESPONSIVE TABLE RESIZE
+        // =====================================================
+
+        table.widthProperty().addListener(
+                (observable, oldWidth, newWidth) -> {
+
+                    double width =
+                            newWidth.doubleValue();
+
+                    if (width <= 0) {
+                        return;
+                    }
+
+
+                    /*
+                     * Large window:
+                     *
+                     * Columns share the available width.
+                     */
+
+                    if (width >= 850) {
+
+                        table.setColumnResizePolicy(
+                                TableView.CONSTRAINED_RESIZE_POLICY
+                        );
+                    }
+
+
+                    /*
+                     * Medium / small window:
+                     *
+                     * Keep the columns readable.
+                     * The TableView itself provides the
+                     * horizontal scrollbar.
+                     */
+
+                    else {
+
+                        table.setColumnResizePolicy(
+                                TableView.UNCONSTRAINED_RESIZE_POLICY
+                        );
+                    }
+                }
         );
 
 
@@ -313,9 +467,9 @@ public class CustomerInteractionHistory {
     }
 
 
-    // =========================
+    // =========================================================
     // LOAD CUSTOMER INTERACTIONS
-    // =========================
+    // =========================================================
 
     private void loadInteractions(
             Label interactionCountLabel,
@@ -328,7 +482,9 @@ public class CustomerInteractionHistory {
                 );
 
 
+        // =====================================================
         // SORT NEWEST FIRST
+        // =====================================================
 
         interactionList.sort(
                 Comparator.comparing(
@@ -340,15 +496,20 @@ public class CustomerInteractionHistory {
         );
 
 
-        interactions.clear();
+        // =====================================================
+        // UPDATE TABLE DATA
+        // =====================================================
 
+        interactions.clear();
 
         interactions.addAll(
                 interactionList
         );
 
 
-        // UPDATE INTERACTION COUNT
+        // =====================================================
+        // UPDATE COUNT
+        // =====================================================
 
         interactionCountLabel.setText(
                 "Total Interactions: "
@@ -356,30 +517,52 @@ public class CustomerInteractionHistory {
         );
 
 
-        // HANDLE EMPTY INTERACTION HISTORY
+        // =====================================================
+        // EMPTY STATE
+        // =====================================================
 
         if (interactionList.isEmpty()) {
 
-            noInteractionsLabel.setVisible(true);
+            noInteractionsLabel.setVisible(
+                    true
+            );
 
-            noInteractionsLabel.setManaged(true);
+            noInteractionsLabel.setManaged(
+                    true
+            );
 
-            interactionTable.setVisible(false);
+            interactionTable.setVisible(
+                    false
+            );
 
-            interactionTable.setManaged(false);
+            interactionTable.setManaged(
+                    false
+            );
 
         } else {
 
-            noInteractionsLabel.setVisible(false);
+            noInteractionsLabel.setVisible(
+                    false
+            );
 
-            noInteractionsLabel.setManaged(false);
+            noInteractionsLabel.setManaged(
+                    false
+            );
 
-            interactionTable.setVisible(true);
+            interactionTable.setVisible(
+                    true
+            );
 
-            interactionTable.setManaged(true);
+            interactionTable.setManaged(
+                    true
+            );
         }
     }
 
+
+    // =========================================================
+    // SHOW WINDOW
+    // =========================================================
 
     public void show() {
 
